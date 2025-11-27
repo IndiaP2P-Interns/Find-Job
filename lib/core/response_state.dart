@@ -11,3 +11,5 @@ class Error<T>extends Response<T>{
   final String message;
   Error(this.message);
 }
+
+class Empty<T> extends Response<T> {}
