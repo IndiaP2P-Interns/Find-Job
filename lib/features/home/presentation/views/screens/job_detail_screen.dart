@@ -1,4 +1,5 @@
 import 'package:file_picker/file_picker.dart';
+import 'package:find_job/core/nav/app_routes.dart';
 import 'package:find_job/features/home/presentation/store/apply_job_store.dart';
 import 'package:find_job/features/home/presentation/views/widgets/upload_progress_widget.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:find_job/features/home/domain/model/job.dart';
 import 'package:find_job/features/app_shell/store/navigation_store.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class JobDetailScreen extends StatefulWidget {
@@ -52,8 +54,7 @@ class _JobDetailScreenState extends State<JobDetailScreen>
       duration: const Duration(milliseconds: 300),
     );
 
-
-     _applyStore = sl<ApplyJobStore>();
+    _applyStore = sl<ApplyJobStore>();
 
     _slideAnimation =
         Tween<Offset>(
@@ -347,7 +348,7 @@ class _JobDetailScreenState extends State<JobDetailScreen>
     );
   }
 
-/*
+  /*
   Widget _floatingApplyButton(Job job) {
     return Positioned(
       bottom: 20 + MediaQuery.of(context).padding.bottom,
@@ -383,101 +384,125 @@ class _JobDetailScreenState extends State<JobDetailScreen>
   }
 */
 
+  Widget _floatingApplyButton(Job job) {
+    return Positioned(
+      bottom: 20 + MediaQuery.of(context).padding.bottom,
+      left: 18,
+      right: 18,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 300),
+          opacity: isScrolledDown ? 0 : 1,
+          child: Observer(
+            builder: (_) {
+              final applying = _applyStore.isApplying;
+              final applied = job.applied;
+              return ElevatedButton(
+                onPressed: (applied || applying)
+                    ? null
+                    : () async {
+                        // 1. pick file
+                        // final result = await FilePicker.platform.pickFiles(
+                        //   type: FileType.custom,
+                        //   allowedExtensions: ['pdf', 'doc', 'docx'],
+                        // );
+                        // if (result == null) return;
+                        // final path = result.files.single.path;
+                        // if (path == null) return;
 
-Widget _floatingApplyButton(Job job) {
-  return Positioned(
-    bottom: 20 + MediaQuery.of(context).padding.bottom,
-    left: 18,
-    right: 18,
-    child: SlideTransition(
-      position: _slideAnimation,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 300),
-        opacity: isScrolledDown ? 0 : 1,
-        child: Observer(
-          builder: (_) {
-            final applying = _applyStore.isApplying;
-            final applied = job.applied;
-            return ElevatedButton(
-              onPressed: (applied || applying)
-                  ? null
-                  : () async {
-                      // 1. pick file
-                      final result = await FilePicker.platform.pickFiles(
-                        type: FileType.custom,
-                        allowedExtensions: ['pdf', 'doc', 'docx'],
-                      );
-                      if (result == null) return;
-                      final path = result.files.single.path;
-                      if (path == null) return;
+                        final shouldProceed = await context.push<bool>(
+                          AppRoutes.main.profile_preview,
+                          extra: job,
+                        );
 
-                      // optimistic UI: set applied true so user sees immediate change
-                      setState(() => job.applied = true);
+                        // If user canceled or pressed back → stop here
+                        //if (shouldProceed != true) return;
 
-                      // run apply flow
-                      _applyStore.apply(job.id, path);
+                        // optimistic UI: set applied true so user sees immediate change
+                        setState(() => job.applied = true);
 
-                      // show modal with progress
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (ctx) {
-                          return Observer(
-                            builder: (_) {
-                              if (_applyStore.error != null) {
-                                // close modal and show error snackbar
-                                WidgetsBinding.instance.addPostFrameCallback((_) {
-                                  if (Navigator.canPop(ctx)) Navigator.pop(ctx);
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                    content: Text(_applyStore.error!),
-                                    backgroundColor: Colors.red,
-                                  ));
-                                });
-                                // rollback UI applied flag
-                                setState(() => job.applied = false);
-                                _applyStore.reset();
-                                return const SizedBox.shrink();
-                              }
-                              if (!_applyStore.isApplying && _applyStore.progress == 100) {
-                                WidgetsBinding.instance.addPostFrameCallback((_) {
-                                  if (Navigator.canPop(ctx)) Navigator.pop(ctx);
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                                    content: Text('Application submitted successfully'),
-                                    backgroundColor: Colors.green,
-                                  ));
-                                });
-                                _applyStore.reset();
-                                return const SizedBox.shrink();
-                              }
-                              return AlertDialog(
-                                title: const Text('Uploading resume'),
-                                content: UploadProgressWidget(
-                                  message: _applyStore.statusMessage,
-                                  percent: _applyStore.progress,
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      );
-                    },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.indigo.shade600,
-                disabledBackgroundColor: Colors.grey.shade400,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-              child: Text(
-                job.applied ? "Already Applied" : ( _applyStore.isApplying ? "Applying..." : "Apply Now" ),
-                style: const TextStyle(fontSize: 16, color: Colors.white),
-              ),
-            );
-          },
+                        // run apply flow
+                        _applyStore.apply(job.id, "path");
+
+                        // show modal with progress
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (ctx) {
+                            return Observer(
+                              builder: (_) {
+                                if (_applyStore.error != null) {
+                                  // close modal and show error snackbar
+                                  WidgetsBinding.instance.addPostFrameCallback((
+                                    _,
+                                  ) {
+                                    if (Navigator.canPop(ctx))
+                                      Navigator.pop(ctx);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(_applyStore.error!),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  });
+                                  // rollback UI applied flag
+                                  setState(() => job.applied = false);
+                                  _applyStore.reset();
+                                  return const SizedBox.shrink();
+                                }
+                                if (!_applyStore.isApplying &&
+                                    _applyStore.progress == 100) {
+                                  WidgetsBinding.instance.addPostFrameCallback((
+                                    _,
+                                  ) {
+                                    if (Navigator.canPop(ctx))
+                                      Navigator.pop(ctx);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Application submitted successfully',
+                                        ),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  });
+                                  _applyStore.reset();
+                                  return const SizedBox.shrink();
+                                }
+                                return AlertDialog(
+                                  title: const Text('Uploading resume'),
+                                  content: UploadProgressWidget(
+                                    message: _applyStore.statusMessage,
+                                    percent: _applyStore.progress,
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        );
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.indigo.shade600,
+                  disabledBackgroundColor: Colors.grey.shade400,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: Text(
+                  job.applied
+                      ? "Already Applied"
+                      : (_applyStore.isApplying ? "Applying..." : "Apply Now"),
+                  style: const TextStyle(fontSize: 16, color: Colors.white),
+                ),
+              );
+            },
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _infoCard(String title, String value, IconData icon) {
     return Container(

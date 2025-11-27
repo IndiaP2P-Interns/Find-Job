@@ -17,6 +17,7 @@ class _MainRoutes {
   final home = '/home';
   final myJobs = '/my_jobs';
   final profile = '/profile';
+  final profile_preview = '/profile/preview_screen';
   final jobDetail = '/home/job_detail';
 }
 

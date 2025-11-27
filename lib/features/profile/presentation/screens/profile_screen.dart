@@ -14,7 +14,9 @@ import 'package:find_job/features/profile/presentation/widgets/projects_section.
 import 'package:find_job/features/profile/presentation/widgets/achievements_section.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final bool openInEditMode;
+
+  const ProfileScreen({super.key, this.openInEditMode = false});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -30,6 +32,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     store = sl<ProfileStore>();
     completionCalculator = ProfileCompletionCalculator(store);
     store.initialize();
+
+    if (widget.openInEditMode) {
+      store.toggleEditMode();
+    }
   }
 
   @override

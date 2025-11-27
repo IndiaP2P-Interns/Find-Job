@@ -1,3 +1,5 @@
+import 'package:find_job/features/profile/presentation/stores/profile_completion_calculator.dart';
+import 'package:find_job/features/profile/presentation/stores/profile_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:find_job/core/di/app_module.dart';
@@ -23,6 +25,9 @@ class _JobHomePageState extends State<JobHomePage> {
   final TextEditingController txtController = TextEditingController();
   final JobStore store = sl<JobStore>();
 
+  late final ProfileStore profileStore;
+  late final ProfileCompletionCalculator completionCalculator;
+
   @override
   void initState() {
     super.initState();
@@ -37,6 +42,9 @@ class _JobHomePageState extends State<JobHomePage> {
         store.fetchJobs(loadMore: true);
       }
     });
+
+    profileStore = sl<ProfileStore>();
+    completionCalculator = ProfileCompletionCalculator(profileStore);
   }
 
   Future<void> _refresh() async {
@@ -97,7 +105,12 @@ class _JobHomePageState extends State<JobHomePage> {
                     ),
 
                     // top header
-                    SliverToBoxAdapter(child: HeaderSection()),
+                    SliverToBoxAdapter(
+                      child: HeaderSection(
+                        profilePercentage:
+                            completionCalculator.completionPercentage,
+                      ),
+                    ),
 
                     // search bar + filter
                     SliverPersistentHeader(
@@ -159,6 +172,12 @@ class _JobHomePageState extends State<JobHomePage> {
                                 // setState(() {
                                 //   myJob.applied = true; // mark applied
                                 // });
+
+                                NavHelper.goToWithExtra(
+                                  context,
+                                  AppRoutes.main.jobDetail,
+                                  job,
+                                );
                               },
                               onSave: () {
                                 // Handle save/bookmark logic

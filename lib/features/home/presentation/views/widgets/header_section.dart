@@ -1,10 +1,13 @@
+import 'package:find_job/features/profile/presentation/stores/profile_completion_calculator.dart';
 import 'package:flutter/material.dart';
 import 'greeting_card/animated_title.dart';
 import 'greeting_card/profile_strength_card.dart';
 import 'greeting_card/mini_stat.dart';
 
 class HeaderSection extends StatelessWidget {
-  const HeaderSection({super.key});
+  final int profilePercentage;
+
+  HeaderSection({super.key, required this.profilePercentage});
 
   @override
   Widget build(BuildContext context) {
@@ -34,8 +37,8 @@ class HeaderSection extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 30, 20, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text(
+            children: [
+              const Text(
                 "Hello Vishal 👋",
                 style: TextStyle(
                   fontSize: 22,
@@ -43,10 +46,12 @@ class HeaderSection extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              SizedBox(height: 6),
-              AnimatedTitle(),
-              SizedBox(height: 10),
-              _HeaderStatsRow(),
+              const SizedBox(height: 6),
+              const AnimatedTitle(),
+              const SizedBox(height: 10),
+
+              // FIXED
+              _HeaderStatsRow(profilePercentage),
             ],
           ),
         ),
@@ -67,17 +72,23 @@ class HeaderSection extends StatelessWidget {
 }
 
 class _HeaderStatsRow extends StatelessWidget {
-  const _HeaderStatsRow();
+  final int percent;
+
+  const _HeaderStatsRow(this.percent, {super.key});
 
   @override
   Widget build(BuildContext context) {
     return Transform.translate(
       offset: const Offset(0, 8),
       child: Row(
-        children: const [
-          Expanded(flex: 6, child: ProfileStrengthCard(progress: .7)),
-          SizedBox(width: 12),
+        children: [
           Expanded(
+            flex: 6,
+            //child: ProfileStrengthCard(progress: percent.toDouble() / 10),
+            child: ProfileStrengthCard(progress: .7),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
             flex: 4,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -87,8 +98,6 @@ class _HeaderStatsRow extends StatelessWidget {
               ],
             ),
           ),
-
-          SizedBox(height: 20),
         ],
       ),
     );

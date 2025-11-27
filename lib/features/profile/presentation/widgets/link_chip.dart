@@ -15,9 +15,19 @@ class LinkChip extends StatelessWidget {
 
   Future<void> _launchUrl() async {
     try {
-      final uri = Uri.parse(url);
+      String finalUrl = url.trim();
+
+      // Fix: Add https:// if missing
+      if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+        finalUrl = 'https://$finalUrl';
+      }
+
+      final uri = Uri.parse(finalUrl);
+
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        debugPrint("Cannot launch: $finalUrl");
       }
     } catch (e) {
       debugPrint('Error launching URL: $e');
